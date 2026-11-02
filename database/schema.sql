@@ -1,0 +1,80 @@
+CREATE TABLE IF NOT EXISTS roles (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(100) NOT NULL UNIQUE,
+  description VARCHAR(255)
+);
+
+CREATE TABLE IF NOT EXISTS employees (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  full_name VARCHAR(150) NOT NULL,
+  email VARCHAR(150) NOT NULL UNIQUE,
+  slack_user_id VARCHAR(50) UNIQUE,
+  role_id BIGINT,
+  department VARCHAR(100),
+  join_date DATE,
+  is_admin BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (role_id) REFERENCES roles(id)
+);
+
+CREATE TABLE IF NOT EXISTS checklists (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(150) NOT NULL,
+  role_id BIGINT,
+  FOREIGN KEY (role_id) REFERENCES roles(id)
+);
+
+CREATE TABLE IF NOT EXISTS checklist_items (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  checklist_id BIGINT NOT NULL,
+  title VARCHAR(200) NOT NULL,
+  description TEXT,
+  due_in_days INT DEFAULT 7,
+  sort_order INT DEFAULT 0,
+  FOREIGN KEY (checklist_id) REFERENCES checklists(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS employee_tasks (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  employee_id BIGINT NOT NULL,
+  checklist_item_id BIGINT NOT NULL,
+  status ENUM('PENDING','IN_PROGRESS','COMPLETED') DEFAULT 'PENDING',
+  due_date DATE,
+  completed_at TIMESTAMP NULL,
+  FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE CASCADE,
+  FOREIGN KEY (checklist_item_id) REFERENCES checklist_items(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS documents (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  title VARCHAR(200) NOT NULL,
+  file_name VARCHAR(255) NOT NULL,
+  category VARCHAR(100),
+  status ENUM('UPLOADED','INDEXED','FAILED') DEFAULT 'UPLOADED',
+  uploaded_by BIGINT,
+  uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (uploaded_by) REFERENCES employees(id)
+);
+
+CREATE TABLE IF NOT EXISTS query_logs (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  employee_id BIGINT,
+  question TEXT NOT NULL,
+  answer TEXT,
+  confidence DOUBLE,
+  answered BOOLEAN DEFAULT TRUE,
+  asked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (employee_id) REFERENCES employees(id)
+);
+
+CREATE TABLE IF NOT EXISTS escalations (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  query_log_id BIGINT NOT NULL,
+  assigned_to BIGINT,
+  status ENUM('OPEN','RESOLVED') DEFAULT 'OPEN',
+  resolution TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  resolved_at TIMESTAMP NULL,
+  FOREIGN KEY (query_log_id) REFERENCES query_logs(id),
+  FOREIGN KEY (assigned_to) REFERENCES employees(id)
+);

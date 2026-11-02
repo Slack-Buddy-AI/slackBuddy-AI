@@ -1,0 +1,7 @@
+# Local overrides (activate with: --spring.profiles.active=local)
+spring:
+  jpa:
+    show-sql: true
+logging:
+  level:
+    com.slackbuddy: DEBUG
